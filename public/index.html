@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory — Claude 🌙</title>
+<style>
+:root {
+  /* Warm yellow eye-care theme — Claude APP feel */
+  --bg-primary: #FDF6E3;
+  --bg-secondary: #FAF0D7;
+  --bg-card: #FFFFFF;
+  --bg-hover: #F5ECD0;
+  --bg-input: #FFFDF7;
+  --text-primary: #3D3929;
+  --text-secondary: #7A7460;
+  --text-muted: #A9A08A;
+  --accent: #D4A574;
+  --accent-hover: #C4955F;
+  --accent-light: #F0DCC4;
+  --border: #E8DFC9;
+  --border-light: #F0E8D4;
+  --danger: #C9544D;
+  --danger-hover: #B5433D;
+  --success: #6B9E78;
+  --tag-bg: #EDE4CF;
+  --tag-text: #6B5E42;
+  --shadow: 0 1px 3px rgba(61,57,41,0.08);
+  --shadow-lg: 0 4px 12px rgba(61,57,41,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+
+  /* Calendar */
+  --cal-today: #D4A574;
+  --cal-has-memory: #E8D5B8;
+  --cal-selected: #C4955F;
+
+  /* Importance colors */
+  --imp-1: #A9A08A;
+  --imp-2: #8B9E6B;
+  --imp-3: #D4A574;
+  --imp-4: #D48A5A;
+  --imp-5: #C9544D;
+}
+
+.dark {
+  --bg-primary: #1A1814;
+  --bg-secondary: #221F1A;
+  --bg-card: #2A2620;
+  --bg-hover: #33302A;
+  --bg-input: #2A2620;
+  --text-primary: #E8DFC9;
+  --text-secondary: #A9A08A;
+  --text-muted: #7A7460;
+  --accent: #D4A574;
+  --accent-hover: #E0B584;
+  --accent-light: #3D3425;
+  --border: #3D3929;
+  --border-light: #33302A;
+  --danger: #D46B65;
+  --danger-hover: #E07B75;
+  --success: #7DB88A;
+  --tag-bg: #3D3425;
+  --tag-text: #D4A574;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+  --cal-today: #D4A574;
+  --cal-has-memory: #3D3425;
+  --cal-selected: #C4955F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ─── Header ─── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.logo span { color: var(--accent); }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #FFF;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #FFF;
+}
+.btn-danger:hover { background: var(--danger-hover); }
+
+.btn-sm { padding: 4px 10px; font-size: 13px; }
+.btn-icon { padding: 8px; }
+
+/* ─── Layout ─── */
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: calc(100vh - 57px);
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+  .sidebar.mobile-open {
+    display: block;
+    position: fixed;
+    top: 57px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: var(--bg-secondary);
+    overflow-y: auto;
+  }
+}
+
+/* ─── Sidebar ─── */
+.sidebar {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-light);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* ─── Calendar ─── */
+.calendar {
+  margin-bottom: 24px;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cal-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cal-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.cal-nav button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+.cal-nav button:hover { background: var(--bg-hover); }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.1s;
+  color: var(--text-primary);
+}
+
+.cal-day:hover { background: var(--bg-hover); }
+.cal-day.other-month { color: var(--text-muted); opacity: 0.4; }
+.cal-day.today { background: var(--cal-today); color: #FFF; font-weight: 600; }
+.cal-day.today:hover { background: var(--accent-hover); }
+.cal-day.has-memory { background: var(--cal-has-memory); font-weight: 500; }
+.cal-day.selected { background: var(--cal-selected); color: #FFF; font-weight: 600; }
+
+.cal-day .dot {
+  position: absolute;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.cal-day.today .dot { background: #FFF; }
+
+/* ─── Search ─── */
+.search-box {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border 0.15s;
+}
+
+.search-box input:focus { border-color: var(--accent); }
+
+.search-box input::placeholder { color: var(--text-muted); }
+
+.search-box .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ─── Filters ─── */
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-tag {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  cursor: pointer;
+  transition: all 0.1s;
+  border: 1px solid transparent;
+}
+
+.filter-tag:hover { border-color: var(--accent); }
+.filter-tag.active { background: var(--accent); color: #FFF; }
+
+/* ─── Stats ─── */
+.stats-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.stat-card {
+  padding: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ─── Main Content ─── */
+.main {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.main-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.main-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ─── Memory Cards ─── */
+.memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.memory-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all 0.15s;
+  box-shadow: var(--shadow);
+}
+
+.memory-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border);
+}
+
+.memory-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.memory-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.memory-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.memory-category {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.importance-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.importance-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.importance-dot.filled { background: var(--accent); }
+
+.memory-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.memory-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.keyword-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+
+.memory-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.memory-card:hover .memory-actions { opacity: 1; }
+
+.memory-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* ─── Empty State ─── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text-secondary); }
+.empty-state p { font-size: 14px; }
+
+/* ─── Modal ─── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h3 { font-size: 16px; font-weight: 600; }
+
+.modal-body { padding: 20px; }
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border 0.15s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus { border-color: var(--accent); }
+
+.form-group textarea { resize: vertical; min-height: 100px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ─── Theme toggle ─── */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.theme-toggle:hover { background: var(--bg-hover); }
+
+/* ─── Mobile menu btn ─── */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+@media (max-width: 768px) {
+  .mobile-menu-btn { display: block; }
+}
+
+/* ─── Toast ─── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.2s ease;
+}
+
+.toast-success { background: var(--success); color: #FFF; }
+.toast-error { background: var(--danger); color: #FFF; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─── Loading ─── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="logo">Memory <span>🌙</span></div>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-primary btn-sm" onclick="openModal()">+ New Memory</button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️</button>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <!-- Calendar -->
+    <div class="calendar">
+      <div class="cal-header">
+        <div class="cal-title" id="calTitle"></div>
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">‹</button>
+          <button onclick="goToday()">·</button>
+          <button onclick="changeMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search memories..." oninput="debounceSearch()">
+    </div>
+
+    <!-- Category Filters -->
+    <div class="filter-section">
+      <div class="filter-label">Categories</div>
+      <div class="filter-tags" id="categoryFilters"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-mini">
+      <div class="stat-card">
+        <div class="stat-num" id="statTotal">0</div>
+        <div class="stat-label">Memories</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statCategories">0</div>
+        <div class="stat-label">Categories</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="main-header">
+      <div>
+        <div class="main-title" id="mainTitle">All Memories</div>
+        <div class="main-subtitle" id="mainSubtitle"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear Filters</button>
+      </div>
+    </div>
+    <div class="memory-list" id="memoryList">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">New Memory</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="formDate">
+        </div>
+        <div class="form-group">
+          <label>Time (optional)</label>
+          <input type="time" id="formTime">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Content</label>
+        <textarea id="formContent" rows="4" placeholder="What happened? What should be remembered?"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="formCategory" placeholder="e.g. relationship, technical, preference" list="categoryList">
+          <datalist id="categoryList"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Importance (1-5)</label>
+          <select id="formImportance">
+            <option value="1">1 — Trivial</option>
+            <option value="2">2 — Minor</option>
+            <option value="3" selected>3 — Normal</option>
+            <option value="4">4 — Important</option>
+            <option value="5">5 — Critical</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Keywords</label>
+        <input type="text" id="formKeywords" placeholder="comma-separated: rosa, preference, food">
+        <div class="form-hint">Separate with commas</div>
+      </div>
+      <div class="form-group">
+        <label>Source (optional)</label>
+        <input type="text" id="formSource" placeholder="e.g. telegram, webchat, observation">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="formSubmit" onclick="submitMemory()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteOverlay" onclick="closeDeleteOverlay(event)">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <h3>Delete Memory</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeDelete()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);">This memory will be permanently deleted. Are you sure?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDelete()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const AUTH_TOKEN = 'rosa-memory-2026';
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+let currentYear, currentMonth; // 0-indexed month
+let selectedDate = null;
+let selectedCategory = null;
+let searchQuery = '';
+let calendarData = {};
+let editingId = null;
+let deletingId = null;
+let categories = [];
+let searchTimeout = null;
+
+// ─── Init ───
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  const now = new Date();
+  // Use UTC+8
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  currentYear = utc8.getUTCFullYear();
+  currentMonth = utc8.getUTCMonth();
+  renderCalendar();
+  loadMemories();
+  loadCategories();
+  loadStats();
+});
+
+// ─── Theme ───
+function initTheme() {
+  // Default to dark after 18:00 UTC+8
+  const now = new Date();
+  const utc8Hour = (now.getUTCHours() + 8) % 24;
+  const saved = localStorage.getItem('theme');
+  const prefersDark = saved === 'dark' || (!saved && (utc8Hour >= 18 || utc8Hour < 7));
+  if (prefersDark) {
+    document.body.classList.add('dark');
+    document.getElementById('themeBtn').textContent = '🌙';
+  }
+}
+
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+// ─── API ───
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + AUTH_TOKEN,
+    },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  return res.json();
+}
+
+// ─── Calendar ───
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  document.getElementById('calTitle').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+
+  // Monday-start: getDay() 0=Sun→6, 1=Mon→0, ...
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const startWeekday = (firstDay.getDay() + 6) % 7; // Monday=0
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysInPrev = new Date(currentYear, currentMonth, 0).getDate();
+
+  const now = new Date();
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const todayStr = utc8.toISOString().split('T')[0];
+
+  let html = WEEKDAYS.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+
+  // Previous month filler
+  for (let i = startWeekday - 1; i >= 0; i--) {
+    const d = daysInPrev - i;
+    html += `<div class="cal-day other-month">${d}</div>`;
+  }
+
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === selectedDate;
+    const hasMem = calendarData[dateStr];
+    const classes = ['cal-day'];
+    if (isToday) classes.push('today');
+    if (isSelected) classes.push('selected');
+    if (hasMem) classes.push('has-memory');
+    const dot = hasMem ? '<div class="dot"></div>' : '';
+    html += `<div class="${classes.join(' ')}" onclick="selectDate('${dateStr}')">${d}${dot}</div>`;
+  }
+
+  // Next month filler
+  const totalCells = startWeekday + daysInMonth;
+  const remaining = (7 - totalCells % 7) % 7;
+  for (let d = 1; d <= remaining; d++) {
+    html += `<div class="cal-day other-month">${d}</div>`;
+  }
+
+  grid.innerHTML = html;
+  loadCalendarData();
+}
+
+async function loadCalendarData() {
+  const ym = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+  const res = await api(`/memories/calendar/${ym}`);
+  if (res.ok) {
+    calendarData = {};
+    for (const row of res.data) {
+      calendarData[row.date] = row.count;
+    }
+    // Re-render to add dots
+    const days = document.querySelectorAll('.cal-day:not(.other-month):not(.cal-weekday)');
+    days.forEach(el => {
+      const d = parseInt(el.textContent);
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      if (calendarData[dateStr]) {
+        el.classList.add('has-memory');
+        if (!el.querySelector('.dot')) {
+          el.insertAdjacentHTML('beforeend', '<div class="dot"></div>');
+        }
+      }
+    });
+  }
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function goToday() {
+  const now = new Date();
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  currentYear = utc8.getUTCFullYear();
+  currentMonth = utc8.getUTCMonth();
+  selectedDate = utc8.toISOString().split('T')[0];
+  renderCalendar();
+  loadMemories();
+}
+
+function selectDate(dateStr) {
+  if (selectedDate === dateStr) {
+    selectedDate = null;
+  } else {
+    selectedDate = dateStr;
+  }
+  renderCalendar();
+  loadMemories();
+}
+
+// ─── Memories ───
+async function loadMemories() {
+  const list = document.getElementById('memoryList');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  let params = new URLSearchParams();
+  if (selectedDate) params.set('date', selectedDate);
+  if (selectedCategory) params.set('category', selectedCategory);
+  if (searchQuery) params.set('q', searchQuery);
+
+  const title = document.getElementById('mainTitle');
+  const subtitle = document.getElementById('mainSubtitle');
+
+  if (selectedDate) {
+    const d = new Date(selectedDate + 'T00:00:00');
+    title.textContent = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  } else if (searchQuery) {
+    title.textContent = `Search: "${searchQuery}"`;
+  } else if (selectedCategory) {
+    title.textContent = `Category: ${selectedCategory}`;
+  } else {
+    title.textContent = 'All Memories';
+  }
+
+  const res = await api(`/memories?${params.toString()}`);
+  if (!res.ok) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${res.error}</p></div>`;
+    return;
+  }
+
+  subtitle.textContent = `${res.total} memor${res.total === 1 ? 'y' : 'ies'}`;
+
+  if (res.data.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🌙</div>
+        <h3>No memories here yet</h3>
+        <p>${selectedDate ? 'Nothing recorded for this date.' : 'Start capturing moments.'}</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = res.data.map(m => renderMemoryCard(m)).join('');
+}
+
+function renderMemoryCard(m) {
+  const dots = Array.from({length: 5}, (_, i) =>
+    `<div class="importance-dot ${i < m.importance ? 'filled' : ''}"></div>`
+  ).join('');
+
+  const keywords = m.keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('');
+  const source = m.source ? `<div class="memory-source">via ${m.source}</div>` : '';
+  const timeStr = m.time ? ` ${m.time}` : '';
+
+  return `
+    <div class="memory-card" data-id="${m.id}">
+      <div class="memory-card-header">
+        <div class="memory-meta">
+          <span class="memory-date">${m.date}${timeStr}</span>
+          <span class="memory-category">${m.category}</span>
+          <div class="importance-dots">${dots}</div>
+        </div>
+        <div class="memory-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editMemory(${m.id})">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteMemory(${m.id})">Delete</button>
+        </div>
+      </div>
+      <div class="memory-content">${escapeHtml(m.content)}</div>
+      <div class="memory-keywords">${keywords}</div>
+      ${source}
+    </div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ─── Categories ───
+async function loadCategories() {
+  const res = await api('/memories/categories');
+  if (!res.ok) return;
+  categories = res.data;
+  const container = document.getElementById('categoryFilters');
+  const datalist = document.getElementById('categoryList');
+  
+  container.innerHTML = res.data.map(c =>
+    `<span class="filter-tag ${selectedCategory === c.category ? 'active' : ''}" 
+          onclick="filterCategory('${c.category}')">${c.category} (${c.count})</span>`
+  ).join('');
+
+  datalist.innerHTML = res.data.map(c => `<option value="${c.category}">`).join('');
+}
+
+function filterCategory(cat) {
+  selectedCategory = selectedCategory === cat ? null : cat;
+  loadCategories();
+  loadMemories();
+}
+
+// ─── Stats ───
+async function loadStats() {
+  const res = await api('/stats');
+  if (!res.ok) return;
+  document.getElementById('statTotal').textContent = res.data.total;
+  document.getElementById('statCategories').textContent = res.data.categories;
+}
+
+// ─── Search ───
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    searchQuery = document.getElementById('searchInput').value.trim();
+    loadMemories();
+  }, 300);
+}
+
+// ─── Filters ───
+function clearFilters() {
+  selectedDate = null;
+  selectedCategory = null;
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  renderCalendar();
+  loadCategories();
+  loadMemories();
+}
+
+// ─── Modal ───
+function openModal(id = null) {
+  editingId = id;
+  document.getElementById('modalTitle').textContent = id ? 'Edit Memory' : 'New Memory';
+  document.getElementById('formSubmit').textContent = id ? 'Update' : 'Save';
+  
+  if (id) {
+    // Load existing memory
+    api(`/memories/${id}`).then(res => {
+      if (res.ok) {
+        const m = res.data;
+        document.getElementById('formDate').value = m.date;
+        document.getElementById('formTime').value = m.time || '';
+        document.getElementById('formContent').value = m.content;
+        document.getElementById('formCategory').value = m.category;
+        document.getElementById('formImportance').value = m.importance;
+        document.getElementById('formKeywords').value = m.keywords.join(', ');
+        document.getElementById('formSource').value = m.source || '';
+      }
+    });
+  } else {
+    // Default to today (UTC+8)
+    const now = new Date();
+    const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    document.getElementById('formDate').value = selectedDate || utc8.toISOString().split('T')[0];
+    document.getElementById('formTime').value = '';
+    document.getElementById('formContent').value = '';
+    document.getElementById('formCategory').value = '';
+    document.getElementById('formImportance').value = '3';
+    document.getElementById('formKeywords').value = '';
+    document.getElementById('formSource').value = '';
+  }
+  
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+function closeModalOverlay(e) {
+  if (e.target === e.currentTarget) closeModal();
+}
+
+async function submitMemory() {
+  const data = {
+    date: document.getElementById('formDate').value,
+    time: document.getElementById('formTime').value || null,
+    content: document.getElementById('formContent').value,
+    category: document.getElementById('formCategory').value || 'general',
+    importance: parseInt(document.getElementById('formImportance').value),
+    keywords: document.getElementById('formKeywords').value.split(',').map(s => s.trim()).filter(Boolean),
+    source: document.getElementById('formSource').value || null,
+  };
+
+  if (!data.date || !data.content) {
+    toast('Date and content are required', 'error');
+    return;
+  }
+
+  let res;
+  if (editingId) {
+    res = await api(`/memories/${editingId}`, { method: 'PUT', body: data });
+  } else {
+    res = await api('/memories', { method: 'POST', body: data });
+  }
+
+  if (res.ok) {
+    toast(editingId ? 'Memory updated' : 'Memory created', 'success');
+    closeModal();
+    loadMemories();
+    loadCalendarData();
+    loadCategories();
+    loadStats();
+  } else {
+    toast(res.error || 'Failed to save', 'error');
+  }
+}
+
+// ─── Edit/Delete ───
+function editMemory(id) {
+  openModal(id);
+}
+
+function deleteMemory(id) {
+  deletingId = id;
+  document.getElementById('deleteOverlay').classList.add('open');
+}
+
+function closeDelete() {
+  document.getElementById('deleteOverlay').classList.remove('open');
+  deletingId = null;
+}
+
+function closeDeleteOverlay(e) {
+  if (e.target === e.currentTarget) closeDelete();
+}
+
+async function confirmDelete() {
+  if (!deletingId) return;
+  const res = await api(`/memories/${deletingId}`, { method: 'DELETE' });
+  if (res.ok) {
+    toast('Memory deleted', 'success');
+    closeDelete();
+    loadMemories();
+    loadCalendarData();
+    loadCategories();
+    loadStats();
+  } else {
+    toast(res.error || 'Failed to delete', 'error');
+  }
+}
+
+// ─── Sidebar toggle (mobile) ───
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+// ─── Toast ───
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+</script>
+
+</body>
+</html>
