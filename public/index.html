@@ -812,7 +812,18 @@ body {
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-const AUTH_TOKEN = 'rosa-memory-2026';
+let AUTH_TOKEN = localStorage.getItem('memory_auth_token') || '';
+
+function ensureAuth() {
+  if (AUTH_TOKEN) return true;
+  const token = prompt('Enter your memory token:');
+  if (token) {
+    AUTH_TOKEN = token;
+    localStorage.setItem('memory_auth_token', token);
+    return true;
+  }
+  return false;
+}
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
@@ -864,12 +875,18 @@ async function api(path, opts = {}) {
   const res = await fetch('/api' + path, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + AUTH_TOKEN,
+      ...(AUTH_TOKEN ? {'Authorization': 'Bearer ' + AUTH_TOKEN} : {}),
     },
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
-  return res.json();
+  const data = await res.json();
+  if (res.status === 401) {
+    AUTH_TOKEN = '';
+    localStorage.removeItem('memory_auth_token');
+    toast('Token expired or invalid — please re-enter', 'error');
+  }
+  return data;
 }
 
 // ─── Calendar ───
@@ -1145,6 +1162,7 @@ function closeModalOverlay(e) {
 }
 
 async function submitMemory() {
+  if (!ensureAuth()) return toast('Authentication required', 'error');
   const data = {
     date: document.getElementById('formDate').value,
     time: document.getElementById('formTime').value || null,
@@ -1200,6 +1218,7 @@ function closeDeleteOverlay(e) {
 
 async function confirmDelete() {
   if (!deletingId) return;
+  if (!ensureAuth()) return toast('Authentication required', 'error');
   const res = await api(`/memories/${deletingId}`, { method: 'DELETE' });
   if (res.ok) {
     toast('Memory deleted', 'success');
