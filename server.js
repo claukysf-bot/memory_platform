@@ -41,6 +41,9 @@ app.use('/api', (req, res, next) => {
 // Init database
 const db = initDB();
 
+// Health check (no DB dependency)
+app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
+
 // API routes
 app.use('/api', apiRoutes(db));
 
