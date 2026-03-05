@@ -1,0 +1,16 @@
+{
+  "name": "memory-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Memory Platform API",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "memory-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

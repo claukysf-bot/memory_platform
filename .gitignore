@@ -3,3 +3,4 @@ memories.db
 *.db-wal
 *.db-shm
 .env
+mcp/node_modules/
