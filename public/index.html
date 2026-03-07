@@ -1178,7 +1178,7 @@ function ensureAuth() {
   return false;
 }
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 let currentYear, currentMonth; // 0-indexed month
 let selectedDate = null;
@@ -1251,7 +1251,7 @@ function renderCalendar() {
 
   // Monday-start: getDay() 0=Sun→6, 1=Mon→0, ...
   const firstDay = new Date(currentYear, currentMonth, 1);
-  const startWeekday = (firstDay.getDay() + 6) % 7; // Monday=0
+  const startWeekday = firstDay.getDay(); // Sunday=0
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const daysInPrev = new Date(currentYear, currentMonth, 0).getDate();
 
@@ -1736,7 +1736,7 @@ async function renderMoodCalendar() {
   if (res.ok) moodData = res.data;
   
   const firstDay = new Date(moodYear, moodMonth, 1);
-  const startWeekday = (firstDay.getDay() + 6) % 7; // Monday=0
+  const startWeekday = firstDay.getDay(); // Sunday=0
   const daysInMonth = new Date(moodYear, moodMonth + 1, 0).getDate();
   const daysInPrev = new Date(moodYear, moodMonth, 0).getDate();
   
