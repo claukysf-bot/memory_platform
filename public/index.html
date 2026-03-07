@@ -225,6 +225,8 @@ body {
     background: var(--bg-secondary);
     box-shadow: var(--shadow-lg);
     animation: slideRight 0.2s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .nav-rail.mobile-open ~ .nav-backdrop {
     display: none;
@@ -1390,6 +1392,7 @@ async function confirmDelete() {
 function openNav() {
   document.getElementById('navRail').classList.add('mobile-open');
   document.getElementById('navBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeNav() {
@@ -1405,6 +1408,7 @@ function closeNav() {
     backdrop.classList.remove('open');
     nav.style.animation = '';
     backdrop.style.animation = '';
+    document.body.style.overflow = '';
   }, 200);
 }
 
