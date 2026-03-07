@@ -811,8 +811,8 @@ body {
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
-  padding: 6px 2px;
-  min-height: 80px;
+  padding: 6px 4px;
+  min-height: 90px;
   overflow: hidden;
 }
 
@@ -861,6 +861,18 @@ body {
   height: 18px;
   border-radius: 50%;
   border: 1.5px dashed var(--border);
+}
+
+.mood-cal-day .mood-note {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Quicksand', 'Noto Serif SC', var(--font);
 }
 
 .mood-picker-grid {
@@ -1753,9 +1765,11 @@ async function renderMoodCalendar() {
     html += `<div class="mood-cal-day ${isToday ? 'today' : ''}" onclick="openMoodDayPicker('${dateStr}')">
       <span class="day-num">${d}</span>
       <div class="mood-pair">
-        ${rosaEmoji ? `<img src="/emoji/${rosaEmoji.file}" alt="${rosaEmoji.label}" title="Rosa: ${rosaMood.note || rosaEmoji.label}">` : '<div class="mood-dot"></div>'}
-        ${claudeEmoji ? `<img src="/emoji/${claudeEmoji.file}" alt="${claudeEmoji.label}" title="Claude: ${claudeMood.note || claudeEmoji.label}">` : '<div class="mood-dot"></div>'}
+        ${rosaEmoji ? `<img src="/emoji/${rosaEmoji.file}" alt="${rosaEmoji.label}">` : '<div class="mood-dot"></div>'}
+        ${claudeEmoji ? `<img src="/emoji/${claudeEmoji.file}" alt="${claudeEmoji.label}">` : '<div class="mood-dot"></div>'}
       </div>
+      ${rosaMood?.note ? `<div class="mood-note">${escapeHtml(rosaMood.note)}</div>` : ''}
+      ${claudeMood?.note ? `<div class="mood-note">${escapeHtml(claudeMood.note)}</div>` : ''}
     </div>`;
   }
   
