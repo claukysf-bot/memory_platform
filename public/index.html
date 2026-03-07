@@ -157,37 +157,120 @@ body {
 
 /* ─── Layout ─── */
 .layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
+  display: flex;
   min-height: calc(100vh - 57px);
 }
 
+/* ─── Nav Rail ─── */
+.nav-rail {
+  width: 56px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.nav-rail-item {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  position: relative;
+}
+
+.nav-rail-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.nav-rail-item.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.nav-rail-item .tooltip {
+  display: none;
+  position: absolute;
+  left: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+}
+
+.nav-rail-item:hover .tooltip {
+  display: block;
+}
+
 @media (max-width: 768px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-  .sidebar {
+  .nav-rail {
     display: none;
   }
-  .sidebar.mobile-open {
-    display: block;
+  .nav-rail.mobile-open {
+    display: flex;
     position: fixed;
     top: 57px;
     left: 0;
-    right: 0;
     bottom: 0;
     z-index: 99;
+    width: 56px;
     background: var(--bg-secondary);
-    overflow-y: auto;
   }
 }
 
-/* ─── Sidebar ─── */
-.sidebar {
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-light);
-  padding: 20px;
+/* ─── Filter Panel (dropdown) ─── */
+.filter-panel-wrapper {
+  position: relative;
+}
+
+.filter-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 360px;
+  max-height: 70vh;
   overflow-y: auto;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 20px;
+  z-index: 80;
+}
+
+.filter-panel.open {
+  display: block;
+  animation: panelSlideDown 0.2s ease;
+}
+
+@keyframes panelSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .filter-panel {
+    width: calc(100vw - 32px);
+    left: -8px;
+  }
 }
 
 /* ─── Calendar ─── */
@@ -369,6 +452,8 @@ body {
 .main {
   padding: 24px;
   overflow-y: auto;
+  flex: 1;
+  min-width: 0;
 }
 
 .main-header {
@@ -675,7 +760,7 @@ body {
 <!-- Header -->
 <div class="header">
   <div class="header-left">
-    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-btn" onclick="toggleNavRail()">☰</button>
     <div class="logo">Memory <span>🌙</span></div>
   </div>
   <div class="header-right">
@@ -686,59 +771,83 @@ body {
 
 <!-- Layout -->
 <div class="layout">
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <!-- Calendar -->
-    <div class="calendar">
-      <div class="cal-header">
-        <div class="cal-title" id="calTitle"></div>
-        <div class="cal-nav">
-          <button onclick="changeMonth(-1)">‹</button>
-          <button onclick="goToday()">·</button>
-          <button onclick="changeMonth(1)">›</button>
-        </div>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-    </div>
-
-    <!-- Search -->
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search memories..." oninput="debounceSearch()">
-    </div>
-
-    <!-- Category Filters -->
-    <div class="filter-section">
-      <div class="filter-label">Categories</div>
-      <div class="filter-tags" id="categoryFilters"></div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-mini">
-      <div class="stat-card">
-        <div class="stat-num" id="statTotal">0</div>
-        <div class="stat-label">Memories</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" id="statCategories">0</div>
-        <div class="stat-label">Categories</div>
-      </div>
-    </div>
+  <!-- Nav Rail -->
+  <div class="nav-rail" id="navRail">
+    <button class="nav-rail-item active" onclick="switchPage('memory')" id="navMemory">
+      🧠
+      <span class="tooltip">Memories</span>
+    </button>
+    <button class="nav-rail-item" onclick="switchPage('period')" id="navPeriod">
+      ♡
+      <span class="tooltip">Period Tracker</span>
+    </button>
   </div>
 
   <!-- Main Content -->
   <div class="main">
-    <div class="main-header">
-      <div>
-        <div class="main-title" id="mainTitle">All Memories</div>
-        <div class="main-subtitle" id="mainSubtitle"></div>
+    <!-- Memory Page -->
+    <div id="pageMemory">
+      <div class="main-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div>
+            <div class="main-title" id="mainTitle">All Memories</div>
+            <div class="main-subtitle" id="mainSubtitle"></div>
+          </div>
+          <div class="filter-panel-wrapper">
+            <button class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()" id="filterPanelBtn">📅 Filter</button>
+            <div class="filter-panel" id="filterPanel">
+              <!-- Calendar -->
+              <div class="calendar">
+                <div class="cal-header">
+                  <div class="cal-title" id="calTitle"></div>
+                  <div class="cal-nav">
+                    <button onclick="changeMonth(-1)">‹</button>
+                    <button onclick="goToday()">·</button>
+                    <button onclick="changeMonth(1)">›</button>
+                  </div>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+              </div>
+              <!-- Search -->
+              <div class="search-box" style="margin-top:16px;">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search memories..." oninput="debounceSearch()">
+              </div>
+              <!-- Category Filters -->
+              <div class="filter-section" style="margin-top:16px;">
+                <div class="filter-label">Categories</div>
+                <div class="filter-tags" id="categoryFilters"></div>
+              </div>
+              <!-- Stats -->
+              <div class="stats-mini" style="margin-top:16px;">
+                <div class="stat-card">
+                  <div class="stat-num" id="statTotal">0</div>
+                  <div class="stat-label">Memories</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-num" id="statCategories">0</div>
+                  <div class="stat-label">Categories</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear Filters</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear Filters</button>
+      <div class="memory-list" id="memoryList">
+        <div class="loading"><div class="spinner"></div></div>
       </div>
     </div>
-    <div class="memory-list" id="memoryList">
-      <div class="loading"><div class="spinner"></div></div>
+
+    <!-- Period Tracker Page (placeholder) -->
+    <div id="pagePeriod" style="display:none;">
+      <div class="empty-state">
+        <div class="icon">♡</div>
+        <h3>Period Tracker</h3>
+        <p>Coming soon...</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1240,10 +1349,45 @@ async function confirmDelete() {
   }
 }
 
-// ─── Sidebar toggle (mobile) ───
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('mobile-open');
+// ─── Nav Rail toggle (mobile) ───
+function toggleNavRail() {
+  document.getElementById('navRail').classList.toggle('mobile-open');
 }
+
+// ─── Page switching ───
+function switchPage(page) {
+  // Hide all pages
+  document.getElementById('pageMemory').style.display = 'none';
+  document.getElementById('pagePeriod').style.display = 'none';
+  // Deactivate all nav items
+  document.querySelectorAll('.nav-rail-item').forEach(el => el.classList.remove('active'));
+  
+  if (page === 'memory') {
+    document.getElementById('pageMemory').style.display = 'block';
+    document.getElementById('navMemory').classList.add('active');
+  } else if (page === 'period') {
+    document.getElementById('pagePeriod').style.display = 'block';
+    document.getElementById('navPeriod').classList.add('active');
+  }
+  
+  // Close mobile nav
+  document.getElementById('navRail').classList.remove('mobile-open');
+}
+
+// ─── Filter Panel ───
+function toggleFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  panel.classList.toggle('open');
+}
+
+// Close filter panel on outside click
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('filterPanel');
+  const btn = document.getElementById('filterPanelBtn');
+  if (panel && panel.classList.contains('open') && !panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+  }
+});
 
 // ─── Toast ───
 function toast(msg, type = 'success') {
