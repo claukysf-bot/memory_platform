@@ -163,31 +163,32 @@ body {
 
 /* ─── Nav Rail ─── */
 .nav-rail {
-  width: 56px;
+  width: 260px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 12px 0;
+  padding: 16px 12px;
   gap: 4px;
   flex-shrink: 0;
 }
 
 .nav-rail-item {
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 18px;
-  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
   transition: all 0.15s;
   border: none;
   background: none;
-  position: relative;
+  font-family: var(--font);
+  text-align: left;
+  width: 100%;
 }
 
 .nav-rail-item:hover {
@@ -200,24 +201,12 @@ body {
   color: var(--accent);
 }
 
-.nav-rail-item .tooltip {
-  display: none;
-  position: absolute;
-  left: 52px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
+.nav-rail-item .nav-label {
   white-space: nowrap;
-  box-shadow: var(--shadow-lg);
-  z-index: 50;
 }
 
-.nav-rail-item:hover .tooltip {
-  display: block;
+.nav-rail-item .tooltip {
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -231,8 +220,10 @@ body {
     left: 0;
     bottom: 0;
     z-index: 99;
-    width: 56px;
+    width: 80%;
+    max-width: 320px;
     background: var(--bg-secondary);
+    box-shadow: var(--shadow-lg);
   }
 }
 
@@ -778,12 +769,12 @@ body {
   <!-- Nav Rail -->
   <div class="nav-rail" id="navRail">
     <button class="nav-rail-item active" onclick="switchPage('memory')" id="navMemory">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-      <span class="tooltip">Memories</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      <span class="nav-label">Memories</span>
     </button>
     <button class="nav-rail-item" onclick="switchPage('period')" id="navPeriod">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <span class="tooltip">Period Tracker</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span class="nav-label">Period Tracker</span>
     </button>
   </div>
 
