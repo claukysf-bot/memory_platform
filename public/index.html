@@ -226,10 +226,10 @@ body {
     box-shadow: var(--shadow-lg);
     animation: slideRight 0.2s ease;
   }
-  .nav-backdrop {
+  .nav-rail.mobile-open ~ .nav-backdrop {
     display: none;
   }
-  .nav-rail.mobile-open ~ .nav-backdrop {
+  .nav-backdrop.open {
     display: block;
     position: fixed;
     inset: 0;
@@ -797,7 +797,7 @@ body {
       <span class="nav-label">Period Tracker</span>
     </button>
   </div>
-  <div class="nav-backdrop" onclick="document.getElementById('navRail').classList.remove('mobile-open')"></div>
+  <div class="nav-backdrop" id="navBackdrop" onclick="closeNav()"></div>
 
   <!-- Main Content -->
   <div class="main">
@@ -1371,8 +1371,23 @@ async function confirmDelete() {
 }
 
 // ─── Nav Rail toggle (mobile) ───
+function openNav() {
+  document.getElementById('navRail').classList.add('mobile-open');
+  document.getElementById('navBackdrop').classList.add('open');
+}
+
+function closeNav() {
+  document.getElementById('navRail').classList.remove('mobile-open');
+  document.getElementById('navBackdrop').classList.remove('open');
+}
+
 function toggleNavRail() {
-  document.getElementById('navRail').classList.toggle('mobile-open');
+  const nav = document.getElementById('navRail');
+  if (nav.classList.contains('mobile-open')) {
+    closeNav();
+  } else {
+    openNav();
+  }
 }
 
 // ─── Page switching ───
@@ -1398,7 +1413,7 @@ function switchPage(page) {
   }
   
   // Close mobile nav
-  document.getElementById('navRail').classList.remove('mobile-open');
+  closeNav();
 }
 
 // ─── Filter Panel ───
@@ -1445,18 +1460,10 @@ document.addEventListener('touchend', (e) => {
   const nav = document.getElementById('navRail');
   if (dx > 60 && touchStartX < 40) {
     // Swipe right from left edge → open
-    nav.classList.add('mobile-open');
+    openNav();
   } else if (dx < -60 && nav.classList.contains('mobile-open')) {
     // Swipe left → close
-    nav.classList.remove('mobile-open');
-  }
-}, { passive: true });
-
-// Also close nav when tapping outside on mobile
-document.addEventListener('touchstart', (e) => {
-  const nav = document.getElementById('navRail');
-  if (nav.classList.contains('mobile-open') && !nav.contains(e.target)) {
-    nav.classList.remove('mobile-open');
+    closeNav();
   }
 }, { passive: true });
 </script>
