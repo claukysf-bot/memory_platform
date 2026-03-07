@@ -224,7 +224,24 @@ body {
     max-width: 320px;
     background: var(--bg-secondary);
     box-shadow: var(--shadow-lg);
+    animation: slideRight 0.2s ease;
   }
+  .nav-backdrop {
+    display: none;
+  }
+  .nav-rail.mobile-open ~ .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: 57px;
+    background: rgba(0,0,0,0.3);
+    z-index: 98;
+  }
+}
+
+@keyframes slideRight {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
 /* ─── Filter Panel (dropdown) ─── */
@@ -780,6 +797,7 @@ body {
       <span class="nav-label">Period Tracker</span>
     </button>
   </div>
+  <div class="nav-backdrop" onclick="document.getElementById('navRail').classList.remove('mobile-open')"></div>
 
   <!-- Main Content -->
   <div class="main">
@@ -1406,7 +1424,41 @@ function toast(msg, type = 'success') {
   el.textContent = msg;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
-}
+}// ─── Touch swipe for mobile nav ───
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  const touchEndX = e.changedTouches[0].clientX;
+  const touchEndY = e.changedTouches[0].clientY;
+  const dx = touchEndX - touchStartX;
+  const dy = Math.abs(touchEndY - touchStartY);
+  
+  // Only trigger on horizontal swipes (dx > 60px, not too vertical)
+  if (dy > 80) return;
+  
+  const nav = document.getElementById('navRail');
+  if (dx > 60 && touchStartX < 40) {
+    // Swipe right from left edge → open
+    nav.classList.add('mobile-open');
+  } else if (dx < -60 && nav.classList.contains('mobile-open')) {
+    // Swipe left → close
+    nav.classList.remove('mobile-open');
+  }
+}, { passive: true });
+
+// Also close nav when tapping outside on mobile
+document.addEventListener('touchstart', (e) => {
+  const nav = document.getElementById('navRail');
+  if (nav.classList.contains('mobile-open') && !nav.contains(e.target)) {
+    nav.classList.remove('mobile-open');
+  }
+}, { passive: true });
 </script>
 
 </body>
