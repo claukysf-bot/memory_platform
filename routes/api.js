@@ -234,6 +234,78 @@ module.exports = function(db) {
     }
   });
 
+  // ─── Mood Tracking ───
+
+  // GET /api/moods - Get moods for a month
+  router.get('/moods', (req, res) => {
+    try {
+      const { month, person } = req.query;
+      let where = [];
+      let params = [];
+      if (month) { where.push("date LIKE ?"); params.push(month + '%'); }
+      if (person) { where.push("person = ?"); params.push(person); }
+      const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+      const stmt = db.prepare(`SELECT * FROM moods ${whereClause} ORDER BY date DESC`);
+      const rows = stmt.all(...params);
+      return res.json({ ok: true, data: rows });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // GET /api/moods/calendar/:yearMonth - Get moods for calendar view
+  router.get('/moods/calendar/:yearMonth', (req, res) => {
+    try {
+      const { yearMonth } = req.params;
+      const stmt = db.prepare(`SELECT date, person, mood, note FROM moods WHERE date LIKE ? ORDER BY date`);
+      const rows = stmt.all(yearMonth + '%');
+      // Group by date
+      const byDate = {};
+      for (const row of rows) {
+        if (!byDate[row.date]) byDate[row.date] = {};
+        byDate[row.date][row.person] = { mood: row.mood, note: row.note };
+      }
+      return res.json({ ok: true, data: byDate });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // PUT /api/moods - Set mood for a date/person (upsert)
+  router.put('/moods', (req, res) => {
+    try {
+      const { date, person = 'rosa', mood, note, source } = req.body;
+      if (!date || !mood) {
+        return res.status(400).json({ ok: false, error: 'date and mood are required' });
+      }
+      const stmt = db.prepare(`
+        INSERT INTO moods (date, person, mood, note, source)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(date, person) DO UPDATE SET
+          mood = excluded.mood,
+          note = excluded.note,
+          source = excluded.source,
+          updated_at = datetime('now')
+      `);
+      stmt.run(date, person, mood, note || null, source || null);
+      return res.json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // DELETE /api/moods - Delete a mood entry
+  router.delete('/moods', (req, res) => {
+    try {
+      const { date, person = 'rosa' } = req.query;
+      if (!date) return res.status(400).json({ ok: false, error: 'date is required' });
+      db.prepare('DELETE FROM moods WHERE date = ? AND person = ?').run(date, person);
+      return res.json({ ok: true, deleted: true });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
   function parseRow(row) {
     if (!row) return null;
     return {

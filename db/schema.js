@@ -28,6 +28,24 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance);
   `);
 
+  // Mood tracking table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS moods (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      person TEXT NOT NULL DEFAULT 'rosa',
+      mood TEXT NOT NULL,
+      note TEXT DEFAULT NULL,
+      source TEXT DEFAULT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(date, person)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_moods_date ON moods(date);
+    CREATE INDEX IF NOT EXISTS idx_moods_person ON moods(person);
+  `);
+
   // Full-text search
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(

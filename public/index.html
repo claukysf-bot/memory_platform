@@ -772,6 +772,122 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+/* ─── Mood Tracker ─── */
+.mood-calendar {
+  max-width: 600px;
+}
+
+.mood-grid-header {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.mood-weekday {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 4px;
+  font-family: 'Quicksand', var(--font);
+}
+
+.mood-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mood-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr;
+  gap: 4px;
+  align-items: center;
+}
+
+.mood-date-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+  font-family: 'Quicksand', var(--font);
+}
+
+.mood-date-label.today {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.mood-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 0.15s;
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+
+.mood-cell:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.mood-cell img {
+  width: 32px;
+  height: 32px;
+}
+
+.mood-cell .mood-empty {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+}
+
+.mood-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.mood-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 2px solid transparent;
+}
+
+.mood-picker-item:hover {
+  background: var(--bg-hover);
+}
+
+.mood-picker-item.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.mood-picker-item img {
+  width: 36px;
+  height: 36px;
+}
+
+.mood-picker-item span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: 'Quicksand', var(--font);
+  font-weight: 500;
+}
+
 /* ─── Loading ─── */
 .loading {
   display: flex;
@@ -817,6 +933,10 @@ body {
     <button class="nav-rail-item" onclick="switchPage('period')" id="navPeriod">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       <span class="nav-label">Period Tracker</span>
+    </button>
+    <button class="nav-rail-item" onclick="switchPage('mood')" id="navMood">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      <span class="nav-label">Mood Diary</span>
     </button>
   </div>
   <div class="nav-backdrop" id="navBackdrop" onclick="closeNav()"></div>
@@ -888,6 +1008,57 @@ body {
         <div class="icon">♡</div>
         <h3>Period Tracker</h3>
         <p>Coming soon...</p>
+      </div>
+    </div>
+
+    <!-- Mood Tracker Page -->
+    <div id="pageMood" style="display:none;">
+      <div class="main-header">
+        <div>
+          <div class="main-title">Mood Diary</div>
+          <div class="main-subtitle" id="moodSubtitle"></div>
+        </div>
+      </div>
+      
+      <!-- Mood Calendar -->
+      <div class="mood-calendar">
+        <div class="cal-header">
+          <div class="cal-title" id="moodCalTitle"></div>
+          <div class="cal-nav">
+            <button onclick="moodChangeMonth(-1)">‹</button>
+            <button onclick="moodGoToday()">·</button>
+            <button onclick="moodChangeMonth(1)">›</button>
+          </div>
+        </div>
+        <!-- Weekday headers -->
+        <div class="mood-grid-header">
+          <div class="mood-weekday"></div>
+          <div class="mood-weekday" style="text-align:center;">Rosa</div>
+          <div class="mood-weekday" style="text-align:center;">Claude</div>
+        </div>
+        <div id="moodGrid" class="mood-grid"></div>
+      </div>
+
+      <!-- Mood Picker Modal -->
+      <div class="modal-overlay" id="moodPickerOverlay" onclick="closeMoodPickerOverlay(event)">
+        <div class="modal" style="max-width:360px;">
+          <div class="modal-header">
+            <h3 id="moodPickerTitle">How are you feeling?</h3>
+            <button class="btn btn-icon btn-ghost" onclick="closeMoodPicker()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="mood-picker-grid" id="moodPickerGrid"></div>
+            <div class="form-group" style="margin-top:16px;">
+              <label>Note (optional)</label>
+              <input type="text" id="moodNote" placeholder="A few words about today...">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeMoodPicker()">Cancel</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMoodEntry()" id="moodDeleteBtn" style="display:none;">Delete</button>
+            <button class="btn btn-primary" onclick="saveMood()">Save</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1430,6 +1601,7 @@ function switchPage(page) {
   // Hide all pages
   document.getElementById('pageMemory').style.display = 'none';
   document.getElementById('pagePeriod').style.display = 'none';
+  document.getElementById('pageMood').style.display = 'none';
   // Deactivate all nav items
   document.querySelectorAll('.nav-rail-item').forEach(el => el.classList.remove('active'));
   
@@ -1445,6 +1617,11 @@ function switchPage(page) {
     document.getElementById('pagePeriod').style.display = 'block';
     document.getElementById('navPeriod').classList.add('active');
     actionBtn.style.display = 'none';
+  } else if (page === 'mood') {
+    document.getElementById('pageMood').style.display = 'block';
+    document.getElementById('navMood').classList.add('active');
+    actionBtn.style.display = 'none';
+    initMoodPage();
   }
   
   // Close mobile nav
@@ -1474,7 +1651,179 @@ function toast(msg, type = 'success') {
   el.textContent = msg;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
-}// ─── Touch swipe for mobile nav ───
+}// ─── Mood Tracker ───
+const MOODS = [
+  { key: 'happy', label: 'Happy', emoji: 'Smiling face with smiling eyes', file: 'smiling_face_with_smiling_eyes_3d.png' },
+  { key: 'excited', label: 'Excited', emoji: 'Star-struck', file: 'star-struck_3d.png' },
+  { key: 'loved', label: 'Loved', emoji: 'Smiling face with hearts', file: 'smiling_face_with_hearts_3d.png' },
+  { key: 'calm', label: 'Calm', emoji: 'Relieved face', file: 'relieved_face_3d.png' },
+  { key: 'silly', label: 'Silly', emoji: 'Zany face', file: 'zany_face_3d.png' },
+  { key: 'tired', label: 'Tired', emoji: 'Sleeping face', file: 'sleeping_face_3d.png' },
+  { key: 'sad', label: 'Sad', emoji: 'Crying face', file: 'crying_face_3d.png' },
+  { key: 'angry', label: 'Angry', emoji: 'Pouting face', file: 'pouting_face_3d.png' },
+  { key: 'anxious', label: 'Anxious', emoji: 'Anxious face with sweat', file: 'anxious_face_with_sweat_3d.png' },
+  { key: 'meh', label: 'Meh', emoji: 'Neutral face', file: 'neutral_face_3d.png' },
+  { key: 'thinking', label: 'Thinking', emoji: 'Thinking face', file: 'thinking_face_3d.png' },
+  { key: 'crying', label: 'Sobbing', emoji: 'Loudly crying face', file: 'loudly_crying_face_3d.png' },
+];
+
+function moodImgUrl(file) {
+  const name = file.replace('_3d.png', '').replace(/_/g, ' ');
+  const folder = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return `https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@latest/assets/${encodeURIComponent(folder)}/3D/${file}`;
+}
+
+let moodYear, moodMonth;
+let moodData = {};
+let moodPickerDate = null;
+let moodPickerPerson = null;
+let moodPickerSelected = null;
+
+function initMoodPage() {
+  if (!moodYear) {
+    const now = new Date();
+    const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    moodYear = utc8.getUTCFullYear();
+    moodMonth = utc8.getUTCMonth();
+  }
+  renderMoodCalendar();
+}
+
+function moodChangeMonth(delta) {
+  moodMonth += delta;
+  if (moodMonth > 11) { moodMonth = 0; moodYear++; }
+  if (moodMonth < 0) { moodMonth = 11; moodYear--; }
+  renderMoodCalendar();
+}
+
+function moodGoToday() {
+  const now = new Date();
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  moodYear = utc8.getUTCFullYear();
+  moodMonth = utc8.getUTCMonth();
+  renderMoodCalendar();
+}
+
+async function renderMoodCalendar() {
+  const grid = document.getElementById('moodGrid');
+  const ym = `${moodYear}-${String(moodMonth + 1).padStart(2, '0')}`;
+  document.getElementById('moodCalTitle').textContent = `${MONTHS[moodMonth]} ${moodYear}`;
+  
+  // Load mood data
+  const res = await api(`/moods/calendar/${ym}`);
+  if (res.ok) moodData = res.data;
+  
+  const daysInMonth = new Date(moodYear, moodMonth + 1, 0).getDate();
+  const now = new Date();
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const todayStr = utc8.toISOString().split('T')[0];
+  
+  let html = '';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${moodYear}-${String(moodMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isToday = dateStr === todayStr;
+    const dayData = moodData[dateStr] || {};
+    
+    const rosaMood = dayData.rosa;
+    const claudeMood = dayData.claude;
+    
+    html += `<div class="mood-row">
+      <div class="mood-date-label ${isToday ? 'today' : ''}">${d}</div>
+      <div class="mood-cell" onclick="openMoodPicker('${dateStr}', 'rosa')">
+        ${rosaMood ? `<img src="${moodImgUrl(MOODS.find(m => m.key === rosaMood.mood)?.file || 'neutral_face_3d.png')}" alt="${rosaMood.mood}" title="${rosaMood.note || rosaMood.mood}">` : '<div class="mood-empty"></div>'}
+      </div>
+      <div class="mood-cell" onclick="openMoodPicker('${dateStr}', 'claude')">
+        ${claudeMood ? `<img src="${moodImgUrl(MOODS.find(m => m.key === claudeMood.mood)?.file || 'neutral_face_3d.png')}" alt="${claudeMood.mood}" title="${claudeMood.note || claudeMood.mood}">` : '<div class="mood-empty"></div>'}
+      </div>
+    </div>`;
+  }
+  
+  grid.innerHTML = html;
+  document.getElementById('moodSubtitle').textContent = `${Object.keys(moodData).length} days logged`;
+}
+
+function openMoodPicker(date, person) {
+  moodPickerDate = date;
+  moodPickerPerson = person;
+  moodPickerSelected = null;
+  
+  document.getElementById('moodPickerTitle').textContent = person === 'rosa' ? `Rosa — ${date}` : `Claude — ${date}`;
+  document.getElementById('moodNote').value = '';
+  
+  // Check existing
+  const existing = moodData[date]?.[person];
+  const deleteBtn = document.getElementById('moodDeleteBtn');
+  if (existing) {
+    moodPickerSelected = existing.mood;
+    document.getElementById('moodNote').value = existing.note || '';
+    deleteBtn.style.display = '';
+  } else {
+    deleteBtn.style.display = 'none';
+  }
+  
+  // Render picker
+  const grid = document.getElementById('moodPickerGrid');
+  grid.innerHTML = MOODS.map(m => `
+    <div class="mood-picker-item ${moodPickerSelected === m.key ? 'selected' : ''}" onclick="selectMood('${m.key}', this)">
+      <img src="${moodImgUrl(m.file)}" alt="${m.label}">
+      <span>${m.label}</span>
+    </div>
+  `).join('');
+  
+  document.getElementById('moodPickerOverlay').classList.add('open');
+}
+
+function selectMood(key, el) {
+  moodPickerSelected = key;
+  document.querySelectorAll('.mood-picker-item').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeMoodPicker() {
+  document.getElementById('moodPickerOverlay').classList.remove('open');
+}
+
+function closeMoodPickerOverlay(e) {
+  if (e.target === e.currentTarget) closeMoodPicker();
+}
+
+async function saveMood() {
+  if (!moodPickerSelected) { toast('Pick a mood first', 'error'); return; }
+  if (!ensureAuth()) return toast('Authentication required', 'error');
+  
+  const res = await api('/moods', {
+    method: 'PUT',
+    body: {
+      date: moodPickerDate,
+      person: moodPickerPerson,
+      mood: moodPickerSelected,
+      note: document.getElementById('moodNote').value || null,
+      source: 'web'
+    }
+  });
+  
+  if (res.ok) {
+    toast('Mood saved', 'success');
+    closeMoodPicker();
+    renderMoodCalendar();
+  } else {
+    toast(res.error || 'Failed to save', 'error');
+  }
+}
+
+async function deleteMoodEntry() {
+  if (!ensureAuth()) return toast('Authentication required', 'error');
+  const res = await api(`/moods?date=${moodPickerDate}&person=${moodPickerPerson}`, { method: 'DELETE' });
+  if (res.ok) {
+    toast('Mood deleted', 'success');
+    closeMoodPicker();
+    renderMoodCalendar();
+  } else {
+    toast(res.error || 'Failed to delete', 'error');
+  }
+}
+
+// ─── Touch swipe for mobile nav ───
 let touchStartX = 0;
 let touchStartY = 0;
 
