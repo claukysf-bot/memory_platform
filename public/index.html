@@ -268,8 +268,12 @@ body {
 
 @media (max-width: 768px) {
   .filter-panel {
-    width: calc(100vw - 32px);
-    left: -8px;
+    position: fixed;
+    top: auto;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: 60vh;
   }
 }
 
@@ -774,11 +778,11 @@ body {
   <!-- Nav Rail -->
   <div class="nav-rail" id="navRail">
     <button class="nav-rail-item active" onclick="switchPage('memory')" id="navMemory">
-      🧠
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
       <span class="tooltip">Memories</span>
     </button>
     <button class="nav-rail-item" onclick="switchPage('period')" id="navPeriod">
-      ♡
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       <span class="tooltip">Period Tracker</span>
     </button>
   </div>
@@ -794,7 +798,10 @@ body {
             <div class="main-subtitle" id="mainSubtitle"></div>
           </div>
           <div class="filter-panel-wrapper">
-            <button class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()" id="filterPanelBtn">📅 Filter</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFilterPanel()" id="filterPanelBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Filter
+            </button>
             <div class="filter-panel" id="filterPanel">
               <!-- Calendar -->
               <div class="calendar">
