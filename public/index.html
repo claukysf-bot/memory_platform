@@ -1668,9 +1668,7 @@ const MOODS = [
 ];
 
 function moodImgUrl(file) {
-  const name = file.replace('_3d.png', '').replace(/_/g, ' ');
-  const folder = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  return `https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@latest/assets/${encodeURIComponent(folder)}/3D/${file}`;
+  return `/emoji/${file}`;
 }
 
 let moodYear, moodMonth;
