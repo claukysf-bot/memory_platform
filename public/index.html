@@ -236,12 +236,28 @@ body {
     top: 57px;
     background: rgba(0,0,0,0.3);
     z-index: 98;
+    animation: fadeIn 0.2s ease;
   }
 }
 
 @keyframes slideRight {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* ─── Filter Panel (dropdown) ─── */
@@ -1377,8 +1393,19 @@ function openNav() {
 }
 
 function closeNav() {
-  document.getElementById('navRail').classList.remove('mobile-open');
-  document.getElementById('navBackdrop').classList.remove('open');
+  const nav = document.getElementById('navRail');
+  const backdrop = document.getElementById('navBackdrop');
+  if (!nav.classList.contains('mobile-open')) return;
+  
+  nav.style.animation = 'slideLeft 0.2s ease forwards';
+  backdrop.style.animation = 'fadeOut 0.2s ease forwards';
+  
+  setTimeout(() => {
+    nav.classList.remove('mobile-open');
+    backdrop.classList.remove('open');
+    nav.style.animation = '';
+    backdrop.style.animation = '';
+  }, 200);
 }
 
 function toggleNavRail() {
@@ -1458,8 +1485,8 @@ document.addEventListener('touchend', (e) => {
   if (dy > 80) return;
   
   const nav = document.getElementById('navRail');
-  if (dx > 60 && touchStartX < 40) {
-    // Swipe right from left edge → open
+  if (dx > 60) {
+    // Swipe right anywhere → open
     openNav();
   } else if (dx < -60 && nav.classList.contains('mobile-open')) {
     // Swipe left → close
