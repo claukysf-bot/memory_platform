@@ -781,6 +781,9 @@ body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .mood-cal-weekday {
@@ -795,11 +798,10 @@ body {
 }
 
 .mood-cal-day {
-  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 2px;
   border-radius: var(--radius-sm);
   background: var(--bg-card);
@@ -807,7 +809,9 @@ body {
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
-  padding: 4px;
+  padding: 4px 2px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .mood-cal-day:hover {
@@ -833,25 +837,26 @@ body {
 
 .mood-cal-day .mood-pair {
   display: flex;
-  gap: 2px;
+  flex-direction: column;
+  gap: 1px;
   align-items: center;
 }
 
 .mood-cal-day .mood-pair img {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
 }
 
 @media (min-width: 500px) {
   .mood-cal-day .mood-pair img {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 }
 
 .mood-cal-day .mood-pair .mood-dot {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 1.5px dashed var(--border);
 }
