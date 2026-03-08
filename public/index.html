@@ -2026,6 +2026,13 @@ async function deleteMoodEntry() {
 let journalYear, journalMonth;
 let journalViewingId = null;
 
+function utcToLocal(utcStr) {
+  if (!utcStr) return '';
+  const d = new Date(utcStr + 'Z');
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function initJournalPage() {
   if (!journalYear) {
     const now = new Date();
@@ -2070,7 +2077,7 @@ async function loadJournalEntries() {
       </div>
       <div class="journal-card-preview">${escapeHtml(e.content)}</div>
       <div class="journal-card-footer">
-        <span style="color:var(--accent);">${e.person === 'claude' ? '月' : '卅'}</span> <span>${e.person}</span>
+        <span style="color:var(--accent);">${e.person === 'claude' ? '🌙' : '🌸'}</span> <span>${e.person}</span>
         ${e.commentCount > 0 ? `<span>· ${e.commentCount} comment${e.commentCount > 1 ? 's' : ''}</span>` : ''}
       </div>
     </div>
@@ -2099,7 +2106,7 @@ function renderJournalComments(comments) {
   }
   container.innerHTML = comments.map(c => `
     <div class="journal-comment-item">
-      <div class="journal-comment-meta"><span style="color:var(--accent);">${c.person === 'claude' ? '月' : '卅'}</span> ${c.person} · ${c.created_at}</div>
+      <div class="journal-comment-meta"><span style="color:var(--accent);">${c.person === 'claude' ? '🌙' : '🌸'}</span> ${c.person} · ${utcToLocal(c.created_at)}</div>
       <div class="journal-comment-text">${escapeHtml(c.content)}</div>
     </div>
   `).join('');
