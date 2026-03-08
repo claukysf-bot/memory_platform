@@ -306,6 +306,118 @@ module.exports = function(db) {
     }
   });
 
+  // ─── Journal ───
+
+  // GET /api/journal - List journal entries
+  router.get('/journal', (req, res) => {
+    try {
+      const { month, person, limit = 50, offset = 0 } = req.query;
+      let where = [];
+      let params = [];
+      if (month) { where.push("date LIKE ?"); params.push(month + '%'); }
+      if (person) { where.push("person = ?"); params.push(person); }
+      const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+      const total = db.prepare(`SELECT COUNT(*) as count FROM journal ${whereClause}`).get(...params).count;
+      const rows = db.prepare(`SELECT * FROM journal ${whereClause} ORDER BY date DESC, created_at DESC LIMIT ? OFFSET ?`).all(...params, Number(limit), Number(offset));
+      // Attach comment counts
+      const commentStmt = db.prepare('SELECT COUNT(*) as count FROM journal_comments WHERE journal_id = ?');
+      const data = rows.map(r => ({ ...r, commentCount: commentStmt.get(r.id).count }));
+      return res.json({ ok: true, data, total });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // GET /api/journal/calendar/:yearMonth - Journal dates for calendar dots
+  router.get('/journal/calendar/:yearMonth', (req, res) => {
+    try {
+      const { yearMonth } = req.params;
+      const stmt = db.prepare(`SELECT date, COUNT(*) as count FROM journal WHERE date LIKE ? GROUP BY date`);
+      const rows = stmt.all(yearMonth + '%');
+      return res.json({ ok: true, data: rows });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // GET /api/journal/:id - Get single entry with comments
+  router.get('/journal/:id', (req, res) => {
+    try {
+      const entry = db.prepare('SELECT * FROM journal WHERE id = ?').get(req.params.id);
+      if (!entry) return res.status(404).json({ ok: false, error: 'Not found' });
+      const comments = db.prepare('SELECT * FROM journal_comments WHERE journal_id = ? ORDER BY created_at ASC').all(req.params.id);
+      return res.json({ ok: true, data: { ...entry, comments } });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // POST /api/journal - Create journal entry
+  router.post('/journal', (req, res) => {
+    try {
+      const { date, title, content, person = 'claude' } = req.body;
+      if (!date || !content) return res.status(400).json({ ok: false, error: 'date and content are required' });
+      const result = db.prepare('INSERT INTO journal (date, title, content, person) VALUES (?, ?, ?, ?)').run(date, title || null, content, person);
+      const row = db.prepare('SELECT * FROM journal WHERE id = ?').get(result.lastInsertRowid);
+      return res.status(201).json({ ok: true, data: row });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // PUT /api/journal/:id - Update journal entry
+  router.put('/journal/:id', (req, res) => {
+    try {
+      const existing = db.prepare('SELECT * FROM journal WHERE id = ?').get(req.params.id);
+      if (!existing) return res.status(404).json({ ok: false, error: 'Not found' });
+      const { title, content } = req.body;
+      db.prepare('UPDATE journal SET title = COALESCE(?, title), content = COALESCE(?, content), updated_at = datetime(\'now\') WHERE id = ?').run(title !== undefined ? title : null, content || null, req.params.id);
+      const row = db.prepare('SELECT * FROM journal WHERE id = ?').get(req.params.id);
+      return res.json({ ok: true, data: row });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // DELETE /api/journal/:id - Delete journal entry
+  router.delete('/journal/:id', (req, res) => {
+    try {
+      const existing = db.prepare('SELECT * FROM journal WHERE id = ?').get(req.params.id);
+      if (!existing) return res.status(404).json({ ok: false, error: 'Not found' });
+      db.prepare('DELETE FROM journal WHERE id = ?').run(req.params.id);
+      return res.json({ ok: true, deleted: true });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // POST /api/journal/:id/comments - Add comment to journal entry
+  router.post('/journal/:id/comments', (req, res) => {
+    try {
+      const entry = db.prepare('SELECT * FROM journal WHERE id = ?').get(req.params.id);
+      if (!entry) return res.status(404).json({ ok: false, error: 'Journal entry not found' });
+      const { content, person = 'rosa' } = req.body;
+      if (!content) return res.status(400).json({ ok: false, error: 'content is required' });
+      const result = db.prepare('INSERT INTO journal_comments (journal_id, person, content) VALUES (?, ?, ?)').run(req.params.id, person, content);
+      const comment = db.prepare('SELECT * FROM journal_comments WHERE id = ?').get(result.lastInsertRowid);
+      return res.status(201).json({ ok: true, data: comment });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // DELETE /api/journal/comments/:id - Delete a comment
+  router.delete('/journal/comments/:id', (req, res) => {
+    try {
+      const existing = db.prepare('SELECT * FROM journal_comments WHERE id = ?').get(req.params.id);
+      if (!existing) return res.status(404).json({ ok: false, error: 'Not found' });
+      db.prepare('DELETE FROM journal_comments WHERE id = ?').run(req.params.id);
+      return res.json({ ok: true, deleted: true });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
   function parseRow(row) {
     if (!row) return null;
     return {

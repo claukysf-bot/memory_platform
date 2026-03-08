@@ -46,6 +46,33 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_moods_person ON moods(person);
   `);
 
+  // Journal (Claude's diary)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS journal (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      title TEXT DEFAULT NULL,
+      content TEXT NOT NULL,
+      person TEXT NOT NULL DEFAULT 'claude',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_journal_date ON journal(date);
+    CREATE INDEX IF NOT EXISTS idx_journal_person ON journal(person);
+
+    CREATE TABLE IF NOT EXISTS journal_comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      journal_id INTEGER NOT NULL,
+      person TEXT NOT NULL DEFAULT 'rosa',
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (journal_id) REFERENCES journal(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_journal_comments_journal ON journal_comments(journal_id);
+  `);
+
   // Full-text search
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
