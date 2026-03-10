@@ -93,7 +93,6 @@ function renderTaskCard(t) {
         <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
           <span style="font-size:16px;color:${statusColor};cursor:pointer;flex-shrink:0;" onclick="${isDone ? '' : `quickCompleteTask(${t.id})`}" title="${isDone ? 'Completed' : 'Click to complete'}">${statusIcon}</span>
           <span style="font-size:14px;font-weight:500;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escapeHtml(t.title)}</span>
-          ${isInProgress ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--success);color:#FFF;flex-shrink:0;">in progress</span>' : ''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;">
           <button class="btn btn-ghost btn-sm" onclick="editTask(${t.id})">Edit</button>
@@ -101,7 +100,7 @@ function renderTaskCard(t) {
         </div>
       </div>
       ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-left:26px;">${escapeHtml(t.description)}</div>` : ''}
-      ${t.deadline || t.priority ? `<div style="display:flex;gap:8px;align-items:center;margin-top:4px;margin-left:26px;">${deadlineStr}<div class="importance-dots">${priorityDots}</div></div>` : ''}
+      ${t.deadline || t.priority || isInProgress ? `<div style="display:flex;gap:8px;align-items:center;margin-top:4px;margin-left:26px;">${deadlineStr}<div class="importance-dots">${priorityDots}</div>${isInProgress ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--success);color:#FFF;font-family:Quicksand,sans-serif;font-weight:500;">in progress</span>' : ''}</div>` : ''}
     </div>`;
 }
 
