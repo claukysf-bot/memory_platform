@@ -604,6 +604,121 @@ body {
   font-style: italic;
 }
 
+/* ─── Task Card ─── */
+.task-card {
+  background: var(--bg-card);
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  transition: all 0.15s;
+  box-shadow: var(--shadow);
+}
+.task-card:hover { box-shadow: var(--shadow-lg); }
+.task-card.task-done { opacity: 0.5; }
+
+.task-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.task-status-icon {
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.task-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  line-height: 1.4;
+}
+.task-title.done {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-status-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--success);
+  color: #FFF;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.task-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+.task-action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.task-action-btn.task-action-del:hover {
+  color: var(--danger);
+}
+
+/* Desktop: hide task actions until hover */
+@media (hover: hover) {
+  .task-actions {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .task-card:hover .task-actions {
+    opacity: 1;
+  }
+}
+/* Touch devices: always show actions */
+@media (hover: none) {
+  .task-actions {
+    opacity: 1;
+  }
+}
+
 /* ─── Empty State ─── */
 .empty-state {
   text-align: center;
