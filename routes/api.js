@@ -418,6 +418,162 @@ module.exports = function(db) {
     }
   });
 
+  // ─── Tasks / Todos ───
+
+  // GET /api/tasks - List tasks with filters
+  router.get('/tasks', (req, res) => {
+    try {
+      const { status, category, priority, deadline_before, deadline_after, q, limit = 100, offset = 0 } = req.query;
+      let where = [];
+      let params = [];
+
+      if (status) { where.push('status = ?'); params.push(status); }
+      if (category) { where.push('category = ?'); params.push(category); }
+      if (priority) { where.push('priority >= ?'); params.push(Number(priority)); }
+      if (deadline_before) { where.push('deadline <= ?'); params.push(deadline_before); }
+      if (deadline_after) { where.push('deadline >= ?'); params.push(deadline_after); }
+      if (q) { where.push('(title LIKE ? OR description LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+
+      const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+      const total = db.prepare(`SELECT COUNT(*) as count FROM tasks ${whereClause}`).get(...params).count;
+      const rows = db.prepare(`
+        SELECT * FROM tasks ${whereClause}
+        ORDER BY
+          CASE status WHEN 'todo' THEN 0 WHEN 'in-progress' THEN 1 WHEN 'done' THEN 2 ELSE 3 END,
+          priority DESC,
+          deadline ASC NULLS LAST,
+          created_at DESC
+        LIMIT ? OFFSET ?
+      `).all(...params, Number(limit), Number(offset));
+
+      return res.json({ ok: true, data: rows, total });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // GET /api/tasks/categories - List task categories
+  router.get('/tasks/categories', (req, res) => {
+    try {
+      const stmt = db.prepare(`SELECT category, status, COUNT(*) as count FROM tasks GROUP BY category, status ORDER BY category`);
+      return res.json({ ok: true, data: stmt.all() });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // GET /api/tasks/:id - Get single task
+  router.get('/tasks/:id', (req, res) => {
+    try {
+      const row = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+      if (!row) return res.status(404).json({ ok: false, error: 'Not found' });
+      return res.json({ ok: true, data: row });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // POST /api/tasks - Create task
+  router.post('/tasks', (req, res) => {
+    try {
+      const { title, description, category = 'general', priority = 3, deadline, status = 'todo' } = req.body;
+      if (!title) return res.status(400).json({ ok: false, error: 'title is required' });
+      const result = db.prepare(`
+        INSERT INTO tasks (title, description, category, priority, status, deadline)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(title, description || null, category, priority, status, deadline || null);
+      const row = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
+      return res.status(201).json({ ok: true, data: row });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // POST /api/tasks/batch - Create multiple tasks
+  router.post('/tasks/batch', (req, res) => {
+    try {
+      const { tasks } = req.body;
+      if (!Array.isArray(tasks)) return res.status(400).json({ ok: false, error: 'tasks array is required' });
+      const stmt = db.prepare(`
+        INSERT INTO tasks (title, description, category, priority, status, deadline)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      const insertMany = db.transaction((items) => {
+        const ids = [];
+        for (const t of items) {
+          if (!t.title) continue;
+          const result = stmt.run(t.title, t.description || null, t.category || 'general', t.priority || 3, t.status || 'todo', t.deadline || null);
+          ids.push(result.lastInsertRowid);
+        }
+        return ids;
+      });
+      const ids = insertMany(tasks);
+      return res.status(201).json({ ok: true, created: ids.length, ids });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // PUT /api/tasks/:id - Update task
+  router.put('/tasks/:id', (req, res) => {
+    try {
+      const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+      if (!existing) return res.status(404).json({ ok: false, error: 'Not found' });
+      const { title, description, category, priority, status, deadline } = req.body;
+      // Auto-set completed_at when status changes to done
+      let completed_at = existing.completed_at;
+      if (status === 'done' && existing.status !== 'done') completed_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
+      if (status && status !== 'done') completed_at = null;
+
+      db.prepare(`
+        UPDATE tasks SET
+          title = COALESCE(?, title),
+          description = COALESCE(?, description),
+          category = COALESCE(?, category),
+          priority = COALESCE(?, priority),
+          status = COALESCE(?, status),
+          deadline = COALESCE(?, deadline),
+          completed_at = ?,
+          updated_at = datetime('now')
+        WHERE id = ?
+      `).run(
+        title || null, description !== undefined ? description : null,
+        category || null, priority || null, status || null,
+        deadline !== undefined ? deadline : null,
+        completed_at, req.params.id
+      );
+      const row = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+      return res.json({ ok: true, data: row });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // PUT /api/tasks/:id/done - Quick complete
+  router.put('/tasks/:id/done', (req, res) => {
+    try {
+      const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+      if (!existing) return res.status(404).json({ ok: false, error: 'Not found' });
+      db.prepare(`UPDATE tasks SET status = 'done', completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`).run(req.params.id);
+      const row = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+      return res.json({ ok: true, data: row });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  // DELETE /api/tasks/:id - Delete task
+  router.delete('/tasks/:id', (req, res) => {
+    try {
+      const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+      if (!existing) return res.status(404).json({ ok: false, error: 'Not found' });
+      db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
+      return res.json({ ok: true, deleted: true });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
   function parseRow(row) {
     if (!row) return null;
     return {

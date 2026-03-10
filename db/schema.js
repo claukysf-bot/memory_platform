@@ -73,6 +73,27 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_journal_comments_journal ON journal_comments(journal_id);
   `);
 
+  // Tasks / Todos
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT NULL,
+      category TEXT NOT NULL DEFAULT 'general',
+      priority INTEGER NOT NULL DEFAULT 3,
+      status TEXT NOT NULL DEFAULT 'todo',
+      deadline TEXT DEFAULT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      completed_at TEXT DEFAULT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+    CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(category);
+    CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
+    CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline);
+  `);
+
   // Full-text search
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
