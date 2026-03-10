@@ -88,19 +88,24 @@ function renderTaskCard(t) {
   const deadlineStr = t.deadline ? `<span style="font-size:11px;color:${isOverdue(t) ? 'var(--danger);font-weight:600' : 'var(--text-muted)'};">${t.deadline}</span>` : '';
 
   return `
-    <div class="memory-card" style="padding:12px 16px;${isDone ? 'opacity:0.5;' : ''}position:relative;">
+    <div class="memory-card" style="padding:12px 16px;${isDone ? 'opacity:0.5;' : ''}">
       <div style="display:flex;align-items:flex-start;gap:10px;">
         <span style="font-size:16px;color:${statusColor};cursor:pointer;flex-shrink:0;margin-top:1px;" onclick="${isDone ? '' : `quickCompleteTask(${t.id})`}" title="${isDone ? 'Completed' : 'Click to complete'}">${statusIcon}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-size:14px;font-weight:500;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}margin-bottom:2px;">${escapeHtml(t.title)}</div>
           ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:4px;">${escapeHtml(t.description)}</div>` : ''}
-          ${isInProgress ? '<div style="margin-bottom:4px;"><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--success);color:#FFF;font-family:Quicksand,sans-serif;font-weight:500;">in progress</span></div>' : ''}
-          ${t.deadline || t.priority ? `<div style="display:flex;gap:8px;align-items:center;">${deadlineStr}<div class="importance-dots">${priorityDots}</div></div>` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              ${deadlineStr}
+              <div class="importance-dots">${priorityDots}</div>
+              ${isInProgress ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--success);color:#FFF;font-family:Quicksand,sans-serif;font-weight:500;">in progress</span>' : ''}
+            </div>
+            <div class="memory-actions" style="display:flex;gap:4px;">
+              <button class="btn btn-ghost btn-sm" onclick="editTask(${t.id})">Edit</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTask(${t.id})">Del</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div style="position:absolute;top:12px;right:12px;display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-sm" onclick="editTask(${t.id})">Edit</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTask(${t.id})">Del</button>
       </div>
     </div>`;
 }
