@@ -89,10 +89,10 @@ function renderTaskCard(t) {
 
   return `
     <div class="memory-card" style="padding:12px 16px;${isDone ? 'opacity:0.5;' : ''}">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:${t.description || t.deadline ? '6px' : '0'};">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:${t.description || t.deadline ? '6px' : '0'};flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
           <span style="font-size:16px;color:${statusColor};cursor:pointer;flex-shrink:0;" onclick="${isDone ? '' : `quickCompleteTask(${t.id})`}" title="${isDone ? 'Completed' : 'Click to complete'}">${statusIcon}</span>
-          <span style="font-size:14px;font-weight:500;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.title)}</span>
+          <span style="font-size:14px;font-weight:500;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escapeHtml(t.title)}</span>
           ${isInProgress ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--success);color:#FFF;flex-shrink:0;">in progress</span>' : ''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;">
