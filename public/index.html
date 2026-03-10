@@ -987,6 +987,11 @@ body {
   line-height: 1.5;
 }
 
+/* ─── Task status badges ─── */
+.task-status-todo { background: var(--accent); color: #FFF; }
+.task-status-in-progress { background: var(--success); color: #FFF; }
+.task-status-done { background: var(--text-muted); color: #FFF; }
+
 /* ─── Loading ─── */
 .loading {
   display: flex;
@@ -1036,6 +1041,10 @@ body {
     <button class="nav-rail-item" onclick="switchPage('journal')" id="navJournal">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       <span class="nav-label">Journal</span>
+    </button>
+    <button class="nav-rail-item" onclick="switchPage('tasks')" id="navTasks">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="nav-label">Tasks</span>
     </button>
     <button class="nav-rail-item" onclick="switchPage('mood')" id="navMood">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
@@ -1209,6 +1218,109 @@ body {
     </div>
   </div>
 </div>
+
+    <!-- Tasks Page -->
+    <div id="pageTasks" style="display:none;">
+      <div class="main-header">
+        <div>
+          <div class="main-title">Tasks</div>
+          <div class="main-subtitle" id="tasksSubtitle"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="filter-tags" id="taskStatusFilters">
+            <span class="filter-tag active" onclick="filterTaskStatus(null, this)">All</span>
+            <span class="filter-tag" onclick="filterTaskStatus('todo', this)">Todo</span>
+            <span class="filter-tag" onclick="filterTaskStatus('in-progress', this)">In Progress</span>
+            <span class="filter-tag" onclick="filterTaskStatus('done', this)">Done</span>
+          </div>
+        </div>
+      </div>
+      <div class="filter-section" style="margin-bottom:20px;">
+        <div class="filter-tags" id="taskCategoryFilters"></div>
+      </div>
+      <div class="memory-list" id="taskList">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Task Create/Edit Modal -->
+    <div class="modal-overlay" id="taskModalOverlay" onclick="if(event.target===event.currentTarget)closeTaskModal()">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="taskModalTitle">New Task</h3>
+          <button class="btn btn-icon btn-ghost" onclick="closeTaskModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="taskFormTitle" placeholder="What needs to be done?">
+          </div>
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <textarea id="taskFormDesc" rows="3" placeholder="Details, notes, context..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="taskFormCategory">
+                <option value="general">General</option>
+                <option value="birthday">Birthday</option>
+                <option value="internship">Internship</option>
+                <option value="academic">Academic</option>
+                <option value="project">Project</option>
+                <option value="health">Health</option>
+                <option value="financial">Financial</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="taskFormPriority">
+                <option value="1">1 — Low</option>
+                <option value="2">2 — Minor</option>
+                <option value="3" selected>3 — Normal</option>
+                <option value="4">4 — Important</option>
+                <option value="5">5 — Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Deadline (optional)</label>
+              <input type="date" id="taskFormDeadline">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="taskFormStatus">
+                <option value="todo">Todo</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button>
+          <button class="btn btn-primary" id="taskFormSubmit" onclick="submitTask()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Delete Confirmation -->
+    <div class="modal-overlay" id="taskDeleteOverlay" onclick="if(event.target===event.currentTarget)closeTaskDelete()">
+      <div class="modal" style="max-width:380px;">
+        <div class="modal-header">
+          <h3>Delete Task</h3>
+          <button class="btn btn-icon btn-ghost" onclick="closeTaskDelete()">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="color:var(--text-secondary);">This task will be permanently deleted. Are you sure?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeTaskDelete()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmTaskDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
 
 <!-- Create/Edit Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOverlay(event)">
@@ -1749,6 +1861,7 @@ function switchPage(page) {
   document.getElementById('pagePeriod').style.display = 'none';
   document.getElementById('pageJournal').style.display = 'none';
   document.getElementById('pageMood').style.display = 'none';
+  document.getElementById('pageTasks').style.display = 'none';
   // Deactivate all nav items
   document.querySelectorAll('.nav-rail-item').forEach(el => el.classList.remove('active'));
   
@@ -1774,6 +1887,13 @@ function switchPage(page) {
     document.getElementById('navMood').classList.add('active');
     actionBtn.style.display = 'none';
     initMoodPage();
+  } else if (page === 'tasks') {
+    document.getElementById('pageTasks').style.display = 'block';
+    document.getElementById('navTasks').classList.add('active');
+    actionBtn.textContent = '+ New Task';
+    actionBtn.onclick = () => openTaskModal();
+    actionBtn.style.display = '';
+    initTasksPage();
   }
   
   // Close mobile nav
@@ -2174,6 +2294,222 @@ document.addEventListener('touchend', (e) => {
     closeNav();
   }
 }, { passive: true });
+
+// ─── Tasks ───
+let taskStatusFilter = null;
+let taskCategoryFilter = null;
+let taskEditingId = null;
+let taskDeletingId = null;
+
+const TASK_STATUS_COLORS = {
+  'todo': 'var(--accent)',
+  'in-progress': '#6B9E78',
+  'done': 'var(--text-muted)'
+};
+
+const TASK_PRIORITY_LABELS = ['', 'Low', 'Minor', 'Normal', 'Important', 'Urgent'];
+
+function initTasksPage() {
+  loadTasks();
+  loadTaskCategories();
+}
+
+async function loadTasks() {
+  const list = document.getElementById('taskList');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  let params = new URLSearchParams();
+  if (taskStatusFilter) params.set('status', taskStatusFilter);
+  if (taskCategoryFilter) params.set('category', taskCategoryFilter);
+
+  const res = await api(`/tasks?${params.toString()}`);
+  if (!res.ok) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">\u26a0\ufe0f</div><p>${res.error}</p></div>`;
+    return;
+  }
+
+  document.getElementById('tasksSubtitle').textContent = `${res.total} task${res.total === 1 ? '' : 's'}`;
+
+  if (res.data.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <h3>${taskStatusFilter === 'done' ? 'No completed tasks' : 'All clear!'}</h3>
+        <p>${taskStatusFilter ? '' : 'Nothing to do. Enjoy the moment.'}</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = res.data.map(t => renderTaskCard(t)).join('');
+}
+
+function renderTaskCard(t) {
+  const statusColor = TASK_STATUS_COLORS[t.status] || 'var(--text-muted)';
+  const isDone = t.status === 'done';
+  const priorityDots = Array.from({length: 5}, (_, i) =>
+    `<div class="importance-dot ${i < t.priority ? 'filled' : ''}"></div>`
+  ).join('');
+
+  const deadlineStr = t.deadline ? `<span style="font-size:12px;color:${isOverdue(t) ? 'var(--danger)' : 'var(--text-muted)'};">${t.deadline}</span>` : '';
+  const completedStr = t.completed_at ? `<span style="font-size:11px;color:var(--success);font-style:italic;">Completed ${t.completed_at.split(' ')[0]}</span>` : '';
+
+  return `
+    <div class="memory-card" style="${isDone ? 'opacity:0.6;' : ''}">
+      <div class="memory-card-header">
+        <div class="memory-meta" style="gap:10px;">
+          <span style="font-size:15px;font-weight:600;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escapeHtml(t.title)}</span>
+          <span class="memory-category" style="background:${statusColor};color:#FFF;">${t.status}</span>
+          <span class="memory-category">${t.category}</span>
+          <div class="importance-dots">${priorityDots}</div>
+        </div>
+        <div class="memory-actions">
+          ${!isDone ? `<button class="btn btn-ghost btn-sm" style="color:var(--success)" onclick="quickCompleteTask(${t.id})">Done</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="editTask(${t.id})">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTask(${t.id})">Delete</button>
+        </div>
+      </div>
+      ${t.description ? `<div class="memory-content" style="font-size:13px;color:var(--text-secondary);">${escapeHtml(t.description)}</div>` : ''}
+      <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
+        ${deadlineStr}
+        ${completedStr}
+      </div>
+    </div>`;
+}
+
+function isOverdue(t) {
+  if (!t.deadline || t.status === 'done') return false;
+  const now = new Date();
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const todayStr = utc8.toISOString().split('T')[0];
+  return t.deadline < todayStr;
+}
+
+async function loadTaskCategories() {
+  const res = await api('/tasks/categories');
+  if (!res.ok) return;
+  const cats = {};
+  for (const row of res.data) {
+    cats[row.category] = (cats[row.category] || 0) + row.count;
+  }
+  const container = document.getElementById('taskCategoryFilters');
+  container.innerHTML = Object.entries(cats).map(([cat, count]) =>
+    `<span class="filter-tag ${taskCategoryFilter === cat ? 'active' : ''}" onclick="filterTaskCategory('${cat}')">${cat} (${count})</span>`
+  ).join('');
+}
+
+function filterTaskStatus(status, el) {
+  taskStatusFilter = status;
+  document.querySelectorAll('#taskStatusFilters .filter-tag').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadTasks();
+}
+
+function filterTaskCategory(cat) {
+  taskCategoryFilter = taskCategoryFilter === cat ? null : cat;
+  loadTasks();
+  loadTaskCategories();
+}
+
+function openTaskModal(id = null) {
+  taskEditingId = id;
+  document.getElementById('taskModalTitle').textContent = id ? 'Edit Task' : 'New Task';
+  document.getElementById('taskFormSubmit').textContent = id ? 'Update' : 'Save';
+
+  if (id) {
+    api(`/tasks/${id}`).then(res => {
+      if (res.ok) {
+        const t = res.data;
+        document.getElementById('taskFormTitle').value = t.title;
+        document.getElementById('taskFormDesc').value = t.description || '';
+        document.getElementById('taskFormCategory').value = t.category;
+        document.getElementById('taskFormPriority').value = t.priority;
+        document.getElementById('taskFormDeadline').value = t.deadline || '';
+        document.getElementById('taskFormStatus').value = t.status;
+      }
+    });
+  } else {
+    document.getElementById('taskFormTitle').value = '';
+    document.getElementById('taskFormDesc').value = '';
+    document.getElementById('taskFormCategory').value = 'general';
+    document.getElementById('taskFormPriority').value = '3';
+    document.getElementById('taskFormDeadline').value = '';
+    document.getElementById('taskFormStatus').value = 'todo';
+  }
+
+  document.getElementById('taskModalOverlay').classList.add('open');
+}
+
+function closeTaskModal() {
+  document.getElementById('taskModalOverlay').classList.remove('open');
+  taskEditingId = null;
+}
+
+async function submitTask() {
+  if (!ensureAuth()) return toast('Authentication required', 'error');
+  const data = {
+    title: document.getElementById('taskFormTitle').value,
+    description: document.getElementById('taskFormDesc').value || null,
+    category: document.getElementById('taskFormCategory').value,
+    priority: parseInt(document.getElementById('taskFormPriority').value),
+    deadline: document.getElementById('taskFormDeadline').value || null,
+    status: document.getElementById('taskFormStatus').value,
+  };
+  if (!data.title) return toast('Title is required', 'error');
+
+  let res;
+  if (taskEditingId) {
+    res = await api(`/tasks/${taskEditingId}`, { method: 'PUT', body: data });
+  } else {
+    res = await api('/tasks', { method: 'POST', body: data });
+  }
+
+  if (res.ok) {
+    toast(taskEditingId ? 'Task updated' : 'Task created', 'success');
+    closeTaskModal();
+    loadTasks();
+    loadTaskCategories();
+  } else {
+    toast(res.error || 'Failed to save', 'error');
+  }
+}
+
+function editTask(id) { openTaskModal(id); }
+
+async function quickCompleteTask(id) {
+  if (!ensureAuth()) return toast('Authentication required', 'error');
+  const res = await api(`/tasks/${id}/done`, { method: 'PUT' });
+  if (res.ok) {
+    toast('Task completed!', 'success');
+    loadTasks();
+    loadTaskCategories();
+  } else {
+    toast(res.error || 'Failed', 'error');
+  }
+}
+
+function deleteTask(id) {
+  taskDeletingId = id;
+  document.getElementById('taskDeleteOverlay').classList.add('open');
+}
+
+function closeTaskDelete() {
+  document.getElementById('taskDeleteOverlay').classList.remove('open');
+  taskDeletingId = null;
+}
+
+async function confirmTaskDelete() {
+  if (!taskDeletingId) return;
+  if (!ensureAuth()) return toast('Authentication required', 'error');
+  const res = await api(`/tasks/${taskDeletingId}`, { method: 'DELETE' });
+  if (res.ok) {
+    toast('Task deleted', 'success');
+    closeTaskDelete();
+    loadTasks();
+    loadTaskCategories();
+  } else {
+    toast(res.error || 'Failed to delete', 'error');
+  }
+}
 </script>
 
 </body>
