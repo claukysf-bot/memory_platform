@@ -43,38 +43,69 @@ async function loadTasks() {
     return;
   }
 
-  list.innerHTML = res.data.map(t => renderTaskCard(t)).join('');
+  // Group by category
+  const groups = {};
+  for (const t of res.data) {
+    if (!groups[t.category]) groups[t.category] = [];
+    groups[t.category].push(t);
+  }
+
+  // Sort categories: ones with urgent/active tasks first
+  const catOrder = Object.entries(groups).sort((a, b) => {
+    const aMax = Math.max(...a[1].map(t => t.status === 'done' ? 0 : t.priority));
+    const bMax = Math.max(...b[1].map(t => t.status === 'done' ? 0 : t.priority));
+    return bMax - aMax;
+  });
+
+  let html = '';
+  for (const [cat, tasks] of catOrder) {
+    const activeCount = tasks.filter(t => t.status !== 'done').length;
+    const doneCount = tasks.filter(t => t.status === 'done').length;
+    const countLabel = doneCount > 0 ? `${activeCount} active, ${doneCount} done` : `${activeCount} task${activeCount !== 1 ? 's' : ''}`;
+    html += `
+      <div class="task-group" style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary);text-transform:capitalize;">${escapeHtml(cat)}</span>
+          <span style="font-size:12px;color:var(--text-muted);">(${countLabel})</span>
+        </div>
+        <div class="memory-list" style="gap:8px;">
+          ${tasks.map(t => renderTaskCard(t)).join('')}
+        </div>
+      </div>`;
+  }
+  list.innerHTML = html;
 }
 
 function renderTaskCard(t) {
   const statusColor = TASK_STATUS_COLORS[t.status] || 'var(--text-muted)';
   const isDone = t.status === 'done';
+  const isInProgress = t.status === 'in-progress';
+  const statusIcon = isDone ? '&#10003;' : isInProgress ? '&#9998;' : '&#9675;';
   const priorityDots = Array.from({length: 5}, (_, i) =>
     `<div class="importance-dot ${i < t.priority ? 'filled' : ''}"></div>`
   ).join('');
 
-  const deadlineStr = t.deadline ? `<span style="font-size:12px;color:${isOverdue(t) ? 'var(--danger)' : 'var(--text-muted)'};">${t.deadline}</span>` : '';
-  const completedStr = t.completed_at ? `<span style="font-size:11px;color:var(--success);font-style:italic;">Completed ${t.completed_at.split(' ')[0]}</span>` : '';
+  const deadlineStr = t.deadline ? `<span style="font-size:11px;color:${isOverdue(t) ? 'var(--danger);font-weight:600' : 'var(--text-muted)'};">${t.deadline}</span>` : '';
 
   return `
-    <div class="memory-card" style="${isDone ? 'opacity:0.6;' : ''}">
-      <div class="memory-card-header">
-        <div class="memory-meta" style="gap:10px;">
-          <span style="font-size:15px;font-weight:600;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escapeHtml(t.title)}</span>
-          <span class="memory-category" style="background:${statusColor};color:#FFF;">${t.status}</span>
-          <span class="memory-category">${t.category}</span>
-          <div class="importance-dots">${priorityDots}</div>
+    <div class="memory-card" style="padding:12px 16px;${isDone ? 'opacity:0.5;' : ''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;">
+          <span style="font-size:16px;color:${statusColor};cursor:pointer;flex-shrink:0;margin-top:1px;" onclick="${isDone ? '' : `quickCompleteTask(${t.id})`}" title="${isDone ? 'Completed' : 'Click to complete'}">${statusIcon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:500;${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escapeHtml(t.title)}</div>
+            ${t.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;line-height:1.4;">${escapeHtml(t.description)}</div>` : ''}
+            <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+              ${deadlineStr}
+              <div class="importance-dots">${priorityDots}</div>
+              ${isInProgress ? '<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--success);color:#FFF;">in progress</span>' : ''}
+            </div>
+          </div>
         </div>
-        <div class="memory-actions">
-          ${!isDone ? `<button class="btn btn-ghost btn-sm" style="color:var(--success)" onclick="quickCompleteTask(${t.id})">Done</button>` : ''}
+        <div class="memory-actions" style="flex-shrink:0;">
           <button class="btn btn-ghost btn-sm" onclick="editTask(${t.id})">Edit</button>
-          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTask(${t.id})">Delete</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTask(${t.id})">Del</button>
         </div>
-      </div>
-      ${t.description ? `<div class="memory-content" style="font-size:13px;color:var(--text-secondary);">${escapeHtml(t.description)}</div>` : ''}
-      <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
-        ${deadlineStr}
-        ${completedStr}
       </div>
     </div>`;
 }
